@@ -1,13 +1,13 @@
-from app.services.chat_service import save_message, get_messages
-from app.database import init_db
 from fastapi import FastAPI
-from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
+from app.database import init_db
+from app.services import chat_service, conversation_service
 from app.services.ollama_service import generate_response
+from app.routes.conversations import router as conversations_router
 
 app = FastAPI()
-init_db()
 
 app.add_middleware(
     CORSMiddleware,
@@ -17,21 +17,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(conversations_router)
+
+init_db()
+
+
 class ChatRequest(BaseModel):
     message: str
+    conversation_id: int
 
-@app.get("/messages")
-def messages():
-    return get_messages()
 
 @app.post("/chat")
-def chat(request: ChatRequest):
-    save_message("user", request.message)
+def chat(req: ChatRequest):
+    chat_service.save_message("user", req.message, req.conversation_id)
 
-    response = generate_response(request.message)
+    response = generate_response(req.message)
 
-    save_message("ai", response)
+    chat_service.save_message("ai", response, req.conversation_id)
+    conversation_service.touch(req.conversation_id)
 
-    return {
-        "response": response
-    }
+    # Auto-title the conversation from the first user message
+    conv = conversation_service.get_conversation(req.conversation_id)
+    if conv and conv["title"] == "New Chat":
+        title = req.message[:50] + ("..." if len(req.message) > 50 else "")
+        conversation_service.update_title(req.conversation_id, title)
+
+    return {"response": response}

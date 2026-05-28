@@ -1,78 +1,54 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Message } from "./types";
+import { useState } from "react";
 import Header from "./components/Header";
+import Sidebar from "./components/Sidebar";
 import MessageList from "./components/MessageList";
 import ChatInput from "./components/ChatInput";
+import { useConversations } from "./hooks/useConversations";
+import { useChat } from "./hooks/useChat";
 
 export default function Home() {
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [input, setInput] = useState("");
+  const { conversations, activeId, setActiveId, createNew, remove, refreshTitles } =
+    useConversations();
+  const { messages, loading, send } = useChat(activeId);
 
-  useEffect(() => {
-    loadMessages();
-  }, []);
-
-  const loadMessages = async () => {
-    try {
-      const res = await fetch("http://127.0.0.1:8000/messages");
-
-      const data = await res.json();
-
-      setMessages(data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const sendMessage = async () => {
-    if (!message.trim()) return;
-
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", content: message },
-    ]);
-
-    setLoading(true);
-
-    try {
-      const res = await fetch("http://127.0.0.1:8000/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
-      });
-
-      const data = await res.json();
-
-      setMessages((prev) => [
-        ...prev,
-        { role: "ai", content: data.response },
-      ]);
-    } catch (error) {
-      console.error(error);
-    }
-
-    setLoading(false);
-    setMessage("");
+  const handleSend = async () => {
+    const text = input.trim();
+    if (!text || activeId === null) return;
+    setInput("");
+    await send(text);
+    refreshTitles();
   };
 
   return (
-    <main className="min-h-screen bg-black text-white flex flex-col">
+    <div className="flex flex-col h-screen bg-gray-950 text-white">
       <Header />
-
-      <MessageList
-        messages={messages}
-        loading={loading}
-      />
-
-      <ChatInput
-        value={message}
-        onChange={setMessage}
-        onSend={sendMessage}
-        disabled={loading}
-      />
-    </main>
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar
+          conversations={conversations}
+          activeId={activeId}
+          onSelect={setActiveId}
+          onNew={createNew}
+          onDelete={remove}
+        />
+        <main className="flex flex-col flex-1 overflow-hidden">
+          {activeId === null ? (
+            <div className="flex flex-1 items-center justify-center text-gray-600 text-sm">
+              Create a new chat to get started
+            </div>
+          ) : (
+            <MessageList messages={messages} loading={loading} />
+          )}
+          <ChatInput
+            value={input}
+            onChange={setInput}
+            onSend={handleSend}
+            disabled={loading || activeId === null}
+          />
+        </main>
+      </div>
+    </div>
   );
 }
