@@ -1,55 +1,78 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Message } from "./types";
+import Header from "./components/Header";
+import MessageList from "./components/MessageList";
+import ChatInput from "./components/ChatInput";
 
 export default function Home() {
   const [message, setMessage] = useState("");
-  const [response, setResponse] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadMessages();
+  }, []);
+
+  const loadMessages = async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/messages");
+
+      const data = await res.json();
+
+      setMessages(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const sendMessage = async () => {
-    const res = await fetch("http://127.0.0.1:8000/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message: message,
-      }),
-    });
+    if (!message.trim()) return;
 
-    const data = await res.json();
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", content: message },
+    ]);
 
-    setResponse(data.response);
+    setLoading(true);
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+
+      const data = await res.json();
+
+      setMessages((prev) => [
+        ...prev,
+        { role: "ai", content: data.response },
+      ]);
+    } catch (error) {
+      console.error(error);
+    }
+
+    setLoading(false);
+    setMessage("");
   };
 
   return (
-    <main className="min-h-screen bg-black text-white p-10">
-      <h1 className="text-4xl font-bold mb-6">
-        AI Workspace OS
-      </h1>
+    <main className="min-h-screen bg-black text-white flex flex-col">
+      <Header />
 
-      <div className="flex gap-4 mb-6">
-        <input
-          type="text"
-          placeholder="Type your message..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          className="flex-1 p-3 rounded text-black"
-        />
+      <MessageList
+        messages={messages}
+        loading={loading}
+      />
 
-        <button
-          onClick={sendMessage}
-          className="bg-white text-black px-6 py-3 rounded"
-        >
-          Send
-        </button>
-      </div>
-
-      <div className="bg-gray-900 p-6 rounded">
-        <h2 className="text-2xl mb-4">AI Response</h2>
-
-        <p>{response}</p>
-      </div>
+      <ChatInput
+        value={message}
+        onChange={setMessage}
+        onSend={sendMessage}
+        disabled={loading}
+      />
     </main>
   );
 }
