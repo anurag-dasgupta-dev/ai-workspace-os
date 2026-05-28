@@ -14,4 +14,6 @@ def generate_response(prompt: str):
 
     data = response.json()
 
-    return data["response"]
+    print(data)
+
+    return data.get("response", "Error: No response from Ollama")
