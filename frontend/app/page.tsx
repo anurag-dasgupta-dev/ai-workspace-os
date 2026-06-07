@@ -22,8 +22,8 @@ export default function Home() {
     refreshTitles();
   };
 
-  const handlePdfExtracted = (text: string, filename: string) => {
-    setInput(`Content of "${filename}":\n\n${text}\n\n`);
+  const handlePdfExtracted = (text: string) => {
+    setInput(`Document Content:\n\n${text}\n\nQuestion:\n`);
   };
 
   return (
