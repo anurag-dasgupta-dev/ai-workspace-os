@@ -39,7 +39,7 @@ export default function Home() {
               Create a new chat to get started
             </div>
           ) : (
-            <MessageList messages={messages} loading={loading} />
+            <MessageList messages={messages} />
           )}
           <ChatInput
             value={input}

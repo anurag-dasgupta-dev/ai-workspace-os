@@ -9,10 +9,7 @@ export function useChat(conversationId: number | null) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (conversationId === null) {
-      setMessages([]);
-      return;
-    }
+    if (conversationId === null) return;
     fetchMessages(conversationId)
       .then(setMessages)
       .catch((err) => console.error("Failed to load messages", err));
@@ -23,27 +20,26 @@ export function useChat(conversationId: number | null) {
       if (!text.trim() || conversationId === null) return;
 
       // Optimistic user bubble — use a temp negative id so it won't clash
-      const tempId = -Date.now();
+      const tempUserId = -Date.now();
+      const tempAiId = tempUserId - 1;
+
       setMessages((prev) => [
         ...prev,
-        { id: tempId, role: "user", content: text, conversation_id: conversationId },
+        { id: tempUserId, role: "user", content: text, conversation_id: conversationId },
+        { id: tempAiId, role: "ai", content: "Thinking...", conversation_id: conversationId },
       ]);
       setLoading(true);
 
       try {
         const data = await sendMessage(text, conversationId);
-        // Replace optimistic message + add AI response with real data
-        const aiMsg: Message = {
-          id: tempId - 1,
-          role: "ai",
-          content: data.response,
-          conversation_id: conversationId,
-        };
-        setMessages((prev) => [...prev, aiMsg]);
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === tempAiId ? { ...msg, content: data.response } : msg
+          )
+        );
       } catch (err) {
         console.error("Failed to send message", err);
-        // Remove optimistic bubble on error
-        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        setMessages((prev) => prev.filter((m) => m.id !== tempUserId && m.id !== tempAiId));
       } finally {
         setLoading(false);
       }
@@ -51,5 +47,5 @@ export function useChat(conversationId: number | null) {
     [conversationId]
   );
 
-  return { messages, loading, send };
+  return { messages: conversationId === null ? [] : messages, loading, send };
 }

@@ -12,20 +12,14 @@ export function useConversations() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
 
-  const load = useCallback(async () => {
-    try {
-      const data = await fetchConversations();
-      setConversations(data);
-      // Auto-select the most recent conversation on first load
-      setActiveId((prev) => (prev === null && data.length > 0 ? data[0].id : prev));
-    } catch (err) {
-      console.error("Failed to load conversations", err);
-    }
-  }, []);
-
   useEffect(() => {
-    load();
-  }, [load]);
+    fetchConversations()
+      .then((data) => {
+        setConversations(data);
+        setActiveId((prev) => (prev === null && data.length > 0 ? data[0].id : prev));
+      })
+      .catch((err) => console.error("Failed to load conversations", err));
+  }, []);
 
   const createNew = useCallback(async () => {
     try {
