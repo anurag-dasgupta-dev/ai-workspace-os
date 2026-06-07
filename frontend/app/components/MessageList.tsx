@@ -1,8 +1,8 @@
-import { Message } from "../types";
+import { ChatItem } from "../types";
 import MessageBubble from "./MessageBubble";
 
 interface Props {
-  messages: Message[];
+  messages: ChatItem[];
 }
 
 export default function MessageList({ messages }: Props) {

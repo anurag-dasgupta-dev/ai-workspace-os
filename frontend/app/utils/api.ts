@@ -31,11 +31,19 @@ export function fetchMessages(conversationId: number) {
   );
 }
 
-export function sendMessage(message: string, conversationId: number) {
+export function sendMessage(
+  message: string,
+  conversationId: number,
+  documentText?: string
+) {
   return request<{ response: string }>("/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, conversation_id: conversationId }),
+    body: JSON.stringify({
+      message,
+      conversation_id: conversationId,
+      ...(documentText ? { document_text: documentText } : {}),
+    }),
   });
 }
 

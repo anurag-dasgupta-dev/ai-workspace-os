@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Message } from "../types";
+import { ChatItem } from "../types";
 import { fetchMessages, sendMessage } from "../utils/api";
 
-export function useChat(conversationId: number | null) {
-  const [messages, setMessages] = useState<Message[]>([]);
+export function useChat(conversationId: number | null, documentText: string | null = null) {
+  const [messages, setMessages] = useState<ChatItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export function useChat(conversationId: number | null) {
       setLoading(true);
 
       try {
-        const data = await sendMessage(text, conversationId);
+        const data = await sendMessage(text, conversationId, documentText ?? undefined);
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === tempAiId ? { ...msg, content: data.response } : msg
@@ -44,8 +44,26 @@ export function useChat(conversationId: number | null) {
         setLoading(false);
       }
     },
+    [conversationId, documentText]
+  );
+
+  const insertDocument = useCallback(
+    (filename: string, pageCount?: number, charCount?: number) => {
+      if (conversationId === null) return;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: -Date.now(),
+          role: "document" as const,
+          filename,
+          conversation_id: conversationId,
+          pageCount,
+          charCount,
+        },
+      ]);
+    },
     [conversationId]
   );
 
-  return { messages: conversationId === null ? [] : messages, loading, send };
+  return { messages: conversationId === null ? [] : messages, loading, send, insertDocument };
 }

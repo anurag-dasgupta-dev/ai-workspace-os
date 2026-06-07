@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { uploadPdf } from "../utils/api";
 
 interface Props {
-  onExtracted: (text: string, filename: string) => void;
+  onExtracted: (text: string, filename: string, pageCount: number) => void;
   disabled?: boolean;
 }
 
@@ -19,7 +19,7 @@ export default function PdfUploadButton({ onExtracted, disabled }: Props) {
     setUploading(true);
     try {
       const result = await uploadPdf(file);
-      onExtracted(result.text, result.filename);
+      onExtracted(result.text, result.filename, result.page_count);
     } catch (err) {
       console.error("PDF upload failed", err);
     } finally {

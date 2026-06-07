@@ -5,7 +5,7 @@ interface Props {
   onChange: (value: string) => void;
   onSend: () => void;
   disabled?: boolean;
-  onPdfExtracted?: (text: string, filename: string) => void;
+  onPdfExtracted?: (text: string, filename: string, pageCount: number) => void;
 }
 
 export default function ChatInput({ value, onChange, onSend, disabled, onPdfExtracted }: Props) {

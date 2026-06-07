@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -27,13 +29,15 @@ init_db()
 class ChatRequest(BaseModel):
     message: str
     conversation_id: int
+    document_text: Optional[str] = None
 
 
 @app.post("/chat")
 def chat(req: ChatRequest):
+    # Save the user's question only — not the full prompt — so history stays clean.
     chat_service.save_message("user", req.message, req.conversation_id)
 
-    response = generate_response(req.message)
+    response = generate_response(req.message, req.document_text)
 
     chat_service.save_message("ai", response, req.conversation_id)
     conversation_service.touch(req.conversation_id)
