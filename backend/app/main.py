@@ -6,6 +6,7 @@ from app.database import init_db
 from app.services import chat_service, conversation_service
 from app.services.ollama_service import generate_response
 from app.routes.conversations import router as conversations_router
+from app.routes.upload import router as upload_router
 
 app = FastAPI()
 
@@ -18,6 +19,7 @@ app.add_middleware(
 )
 
 app.include_router(conversations_router)
+app.include_router(upload_router)
 
 init_db()
 

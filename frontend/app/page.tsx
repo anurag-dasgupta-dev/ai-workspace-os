@@ -22,6 +22,10 @@ export default function Home() {
     refreshTitles();
   };
 
+  const handlePdfExtracted = (text: string, filename: string) => {
+    setInput(`Content of "${filename}":\n\n${text}\n\n`);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gray-950 text-white">
       <Header />
@@ -46,6 +50,7 @@ export default function Home() {
             onChange={setInput}
             onSend={handleSend}
             disabled={loading || activeId === null}
+            onPdfExtracted={handlePdfExtracted}
           />
         </main>
       </div>

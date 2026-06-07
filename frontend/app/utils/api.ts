@@ -38,3 +38,24 @@ export function sendMessage(message: string, conversationId: number) {
     body: JSON.stringify({ message, conversation_id: conversationId }),
   });
 }
+
+export async function uploadPdf(
+  file: File
+): Promise<{ filename: string; text: string; page_count: number }> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(`${API_BASE}/upload/pdf`, {
+    method: "POST",
+    body: formData,
+    // Do NOT set Content-Type — the browser sets it automatically with the
+    // multipart boundary when using FormData.
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Upload failed ${res.status}: ${text}`);
+  }
+
+  return res.json();
+}
