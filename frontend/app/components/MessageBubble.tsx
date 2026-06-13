@@ -3,9 +3,12 @@ import MarkdownRenderer from "./MarkdownRenderer";
 
 interface Props {
   message: ChatItem;
+  isLastAi?: boolean;
+  onRegenerate?: () => void;
+  loading?: boolean;
 }
 
-export default function MessageBubble({ message }: Props) {
+export default function MessageBubble({ message, isLastAi, onRegenerate, loading }: Props) {
   if (message.role === "document") {
     const meta =
       message.pageCount !== undefined
@@ -27,6 +30,7 @@ export default function MessageBubble({ message }: Props) {
   }
 
   const isUser = message.role === "user";
+  const showRegenerate = !isUser && isLastAi && !loading && onRegenerate;
 
   return (
     <div
@@ -39,6 +43,15 @@ export default function MessageBubble({ message }: Props) {
         <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
       ) : (
         <MarkdownRenderer content={message.content} />
+      )}
+      {showRegenerate && (
+        <button
+          onClick={onRegenerate}
+          className="mt-3 flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-200 transition-colors"
+        >
+          <span>↻</span>
+          <span>Regenerate</span>
+        </button>
       )}
     </div>
   );

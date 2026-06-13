@@ -2,11 +2,12 @@ from typing import Optional
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from app.database import init_db
 from app.services import chat_service, conversation_service
-from app.services.ollama_service import generate_response
+from app.services.ollama_service import generate_response, generate_stream
 from app.routes.conversations import router as conversations_router
 from app.routes.upload import router as upload_router
 
@@ -49,3 +50,35 @@ def chat(req: ChatRequest):
         conversation_service.update_title(req.conversation_id, title)
 
     return {"response": response}
+
+
+@app.post("/chat/stream")
+def chat_stream(req: ChatRequest):
+    chat_service.save_message("user", req.message, req.conversation_id)
+
+    conv = conversation_service.get_conversation(req.conversation_id)
+    if conv and conv["title"] == "New Chat":
+        title = req.message[:50] + ("..." if len(req.message) > 50 else "")
+        conversation_service.update_title(req.conversation_id, title)
+
+    def stream_generator():
+        accumulated = []
+        completed = False
+        try:
+            for token in generate_stream(req.message, req.document_text):
+                accumulated.append(token)
+                yield token
+            completed = True
+        finally:
+            if completed and "".join(accumulated).strip():
+                chat_service.save_message("ai", "".join(accumulated), req.conversation_id)
+                conversation_service.touch(req.conversation_id)
+
+    return StreamingResponse(
+        stream_generator(),
+        media_type="text/plain",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )

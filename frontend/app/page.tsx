@@ -14,7 +14,7 @@ export default function Home() {
   const [documentName, setDocumentName] = useState<string | null>(null);
   const { conversations, activeId, setActiveId, createNew, remove, refreshTitles } =
     useConversations();
-  const { messages, loading, send, insertDocument } = useChat(activeId, documentText);
+  const { messages, loading, send, stop, regenerate, insertDocument } = useChat(activeId, documentText);
 
   const handleSend = async () => {
     const text = input.trim();
@@ -52,7 +52,7 @@ export default function Home() {
               Create a new chat to get started
             </div>
           ) : (
-            <MessageList messages={messages} />
+            <MessageList messages={messages} onRegenerate={regenerate} loading={loading} />
           )}
           {documentName && (
             <div className="px-6 py-2 border-t border-gray-800 flex items-center gap-2 bg-gray-900 text-sm text-gray-400">
@@ -70,6 +70,7 @@ export default function Home() {
             value={input}
             onChange={setInput}
             onSend={handleSend}
+            onStop={loading ? stop : undefined}
             disabled={loading || activeId === null}
             onPdfExtracted={handlePdfExtracted}
           />

@@ -47,6 +47,41 @@ export function sendMessage(
   });
 }
 
+export async function streamMessage(
+  message: string,
+  conversationId: number,
+  documentText: string | undefined,
+  onToken: (token: string) => void,
+  signal?: AbortSignal
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/chat/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message,
+      conversation_id: conversationId,
+      ...(documentText ? { document_text: documentText } : {}),
+    }),
+    signal,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`API error ${res.status}: ${text}`);
+  }
+
+  if (!res.body) throw new Error("No response body");
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    onToken(decoder.decode(value, { stream: true }));
+  }
+}
+
 export async function uploadPdf(
   file: File
 ): Promise<{ filename: string; text: string; page_count: number }> {
