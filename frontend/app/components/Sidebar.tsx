@@ -112,12 +112,14 @@ export default function Sidebar({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onDelete(conv.id);
+                    if (window.confirm("Delete this conversation? This action cannot be undone.")) {
+                      onDelete(conv.id);
+                    }
                   }}
                   className="opacity-0 group-hover:opacity-100 ml-1 flex-shrink-0 p-0.5 text-gray-500 hover:text-red-400 transition-all text-xs"
                   aria-label="Delete chat"
                 >
-                  ✕
+                  🗑
                 </button>
               </>
             )}

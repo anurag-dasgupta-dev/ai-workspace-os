@@ -59,6 +59,7 @@ def touch(conv_id: int):
 def delete_conversation(conv_id: int) -> bool:
     conn = get_connection()
     cursor = conn.cursor()
+    cursor.execute("DELETE FROM messages WHERE conversation_id = ?", (conv_id,))
     cursor.execute("DELETE FROM conversations WHERE id = ?", (conv_id,))
     conn.commit()
     deleted = cursor.rowcount > 0

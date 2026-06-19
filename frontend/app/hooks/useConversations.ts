@@ -35,20 +35,30 @@ export function useConversations() {
 
   const remove = useCallback(
     async (id: number) => {
+      const previousConversations = conversations;
+      const previousActiveId = activeId;
+
+      // Pick the item that was adjacent to the deleted one so the view
+      // doesn't jump to the top of the list.
+      let nextActiveId = activeId;
+      if (activeId === id) {
+        const idx = conversations.findIndex((c) => c.id === id);
+        const remaining = conversations.filter((c) => c.id !== id);
+        nextActiveId = remaining[idx]?.id ?? remaining[idx - 1]?.id ?? null;
+      }
+
+      setConversations((prev) => prev.filter((c) => c.id !== id));
+      if (activeId === id) setActiveId(nextActiveId);
+
       try {
         await deleteConversation(id);
-        setConversations((prev) => {
-          const next = prev.filter((c) => c.id !== id);
-          if (activeId === id) {
-            setActiveId(next.length > 0 ? next[0].id : null);
-          }
-          return next;
-        });
       } catch (err) {
         console.error("Failed to delete conversation", err);
+        setConversations(previousConversations);
+        setActiveId(previousActiveId);
       }
     },
-    [activeId]
+    [activeId, conversations]
   );
 
   // Refresh titles after auto-title is set by the backend
