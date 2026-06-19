@@ -6,6 +6,7 @@ import {
   fetchConversations,
   createConversation,
   deleteConversation,
+  renameConversation,
 } from "../utils/api";
 
 export function useConversations() {
@@ -60,5 +61,22 @@ export function useConversations() {
     }
   }, []);
 
-  return { conversations, activeId, setActiveId, createNew, remove, refreshTitles };
+  const rename = useCallback(async (id: number, title: string) => {
+    let previousTitle = "";
+    setConversations((prev) => {
+      const conv = prev.find((c) => c.id === id);
+      if (conv) previousTitle = conv.title;
+      return prev.map((c) => (c.id === id ? { ...c, title } : c));
+    });
+    try {
+      await renameConversation(id, title);
+    } catch (err) {
+      console.error("Failed to rename conversation", err);
+      setConversations((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, title: previousTitle } : c))
+      );
+    }
+  }, []);
+
+  return { conversations, activeId, setActiveId, createNew, remove, refreshTitles, rename };
 }

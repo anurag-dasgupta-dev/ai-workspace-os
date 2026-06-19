@@ -25,6 +25,14 @@ export function deleteConversation(id: number) {
   return request<{ ok: boolean }>(`/conversations/${id}`, { method: "DELETE" });
 }
 
+export function renameConversation(id: number, title: string) {
+  return request<import("../types").Conversation>(`/conversations/${id}/title`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title }),
+  });
+}
+
 export function fetchMessages(conversationId: number) {
   return request<import("../types").Message[]>(
     `/conversations/${conversationId}/messages`

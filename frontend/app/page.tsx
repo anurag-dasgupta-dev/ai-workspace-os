@@ -12,7 +12,7 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [documentText, setDocumentText] = useState<string | null>(null);
   const [documentName, setDocumentName] = useState<string | null>(null);
-  const { conversations, activeId, setActiveId, createNew, remove, refreshTitles } =
+  const { conversations, activeId, setActiveId, createNew, remove, refreshTitles, rename } =
     useConversations();
   const { messages, loading, send, stop, regenerate, insertDocument } = useChat(activeId, documentText);
 
@@ -45,6 +45,7 @@ export default function Home() {
           onSelect={setActiveId}
           onNew={createNew}
           onDelete={remove}
+          onRename={rename}
         />
         <main className="flex flex-col flex-1 overflow-hidden">
           {activeId === null ? (

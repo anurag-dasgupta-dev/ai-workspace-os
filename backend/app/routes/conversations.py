@@ -33,7 +33,10 @@ def get_conversation(conv_id: int):
 
 @router.patch("/{conv_id}/title")
 def update_title(conv_id: int, req: UpdateTitleRequest):
-    conv = conversation_service.update_title(conv_id, req.title)
+    title = req.title.strip()
+    if not title:
+        raise HTTPException(status_code=422, detail="Title cannot be empty")
+    conv = conversation_service.update_title(conv_id, title)
     if not conv:
         raise HTTPException(status_code=404, detail="Conversation not found")
     return conv
